@@ -14,7 +14,9 @@ class RequestRepositoryImpl(
             val requests = firebaseService.getUrgentRequests()
             emit(Result.success(requests))
         } catch (e: Exception) {
-            emit(Result.failure(e))
+            // Don't emit from catch - let the exception propagate
+            // The ViewModel will handle it
+            throw e
         }
     }
 
@@ -23,7 +25,9 @@ class RequestRepositoryImpl(
             val requests = firebaseService.getAllRequests()
             emit(Result.success(requests))
         } catch (e: Exception) {
-            emit(Result.failure(e))
+            // Don't emit from catch - let the exception propagate
+            // The ViewModel will handle it
+            throw e
         }
     }
 

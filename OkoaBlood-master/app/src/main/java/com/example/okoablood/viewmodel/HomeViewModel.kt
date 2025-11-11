@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 class HomeViewModel(
     private val requestRepository: RequestRepository,
@@ -32,20 +33,36 @@ class HomeViewModel(
             try {
                 val allRequests = mutableListOf<BloodRequest>()
 
-                // Collect urgent requests - use first() since flow emits single value
-                val urgentResult = requestRepository.getUrgentBloodRequests().first()
+                // Collect urgent requests - handle Flow exceptions properly
+                val urgentResult = try {
+                    requestRepository.getUrgentBloodRequests().first()
+                } catch (e: CancellationException) {
+                    // Re-throw cancellation exceptions (they're part of coroutine cancellation)
+                    throw e
+                } catch (e: Exception) {
+                    Result.failure<List<BloodRequest>>(e)
+                }
+                
                 if (urgentResult.isSuccess) {
                     allRequests.addAll(urgentResult.getOrDefault(emptyList()))
                 } else {
                     _uiState.value = HomeUiState(
                         isLoading = false,
-                        error = urgentResult.exceptionOrNull()?.message
+                        error = urgentResult.exceptionOrNull()?.message ?: "Failed to load urgent requests"
                     )
                     return@launch
                 }
 
-                // Collect active requests - use first() since flow emits single value
-                val activeResult = requestRepository.getActiveBloodRequests().first()
+                // Collect active requests - handle Flow exceptions properly
+                val activeResult = try {
+                    requestRepository.getActiveBloodRequests().first()
+                } catch (e: CancellationException) {
+                    // Re-throw cancellation exceptions (they're part of coroutine cancellation)
+                    throw e
+                } catch (e: Exception) {
+                    Result.failure<List<BloodRequest>>(e)
+                }
+                
                 if (activeResult.isSuccess) {
                     allRequests.addAll(activeResult.getOrDefault(emptyList()))
                     _uiState.value = HomeUiState(
@@ -55,7 +72,7 @@ class HomeViewModel(
                 } else {
                     _uiState.value = HomeUiState(
                         isLoading = false,
-                        error = activeResult.exceptionOrNull()?.message
+                        error = activeResult.exceptionOrNull()?.message ?: "Failed to load active requests"
                     )
                 }
 
