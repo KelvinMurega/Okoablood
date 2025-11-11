@@ -9,6 +9,7 @@ import com.example.okoablood.data.repository.BloodDonationRepository
 import com.example.okoablood.data.repository.RequestRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class HomeViewModel(
@@ -31,33 +32,31 @@ class HomeViewModel(
             try {
                 val allRequests = mutableListOf<BloodRequest>()
 
-                // Collect urgent requests
-                requestRepository.getUrgentBloodRequests().collect { urgentResult ->
-                    if (urgentResult.isSuccess) {
-                        allRequests.addAll(urgentResult.getOrDefault(emptyList()))
-                    } else {
-                        _uiState.value = HomeUiState(
-                            isLoading = false,
-                            error = urgentResult.exceptionOrNull()?.message
-                        )
-                        return@collect
-                    }
+                // Collect urgent requests - use first() since flow emits single value
+                val urgentResult = requestRepository.getUrgentBloodRequests().first()
+                if (urgentResult.isSuccess) {
+                    allRequests.addAll(urgentResult.getOrDefault(emptyList()))
+                } else {
+                    _uiState.value = HomeUiState(
+                        isLoading = false,
+                        error = urgentResult.exceptionOrNull()?.message
+                    )
+                    return@launch
                 }
 
-                // Collect recent (non-urgent) requests
-                requestRepository.getActiveBloodRequests().collect { recentResult ->
-                    if (recentResult.isSuccess) {
-                        allRequests.addAll(recentResult.getOrDefault(emptyList()))
-                        _uiState.value = HomeUiState(
-                            isLoading = false,
-                            bloodRequests = allRequests
-                        )
-                    } else {
-                        _uiState.value = HomeUiState(
-                            isLoading = false,
-                            error = recentResult.exceptionOrNull()?.message
-                        )
-                    }
+                // Collect active requests - use first() since flow emits single value
+                val activeResult = requestRepository.getActiveBloodRequests().first()
+                if (activeResult.isSuccess) {
+                    allRequests.addAll(activeResult.getOrDefault(emptyList()))
+                    _uiState.value = HomeUiState(
+                        isLoading = false,
+                        bloodRequests = allRequests
+                    )
+                } else {
+                    _uiState.value = HomeUiState(
+                        isLoading = false,
+                        error = activeResult.exceptionOrNull()?.message
+                    )
                 }
 
             } catch (e: Exception) {

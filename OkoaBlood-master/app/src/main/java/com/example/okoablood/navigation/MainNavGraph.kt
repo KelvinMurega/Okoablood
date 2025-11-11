@@ -2,19 +2,10 @@ package com.example.okoablood.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.okoablood.data.datasource.impl.DonorDataSourceImpl
-import com.example.okoablood.data.datasource.impl.UserDataSourceImpl
 import com.example.okoablood.data.model.Donor
-import com.example.okoablood.data.remote.FirebaseService
-import com.example.okoablood.data.repository.AppointmentDataSource
-import com.example.okoablood.data.repository.AppointmentDataSourceImpl
-import com.example.okoablood.data.repository.BloodDonationRepositoryImpl
-import com.example.okoablood.data.repository.DonorDataSource
-import com.example.okoablood.data.repository.UserDataSource
 import com.example.okoablood.di.DependencyProvider
 import com.example.okoablood.ui.screen.AllRequestsScreen
 import com.example.okoablood.ui.screen.BloodRequestsScreen
@@ -55,8 +46,6 @@ fun MainNavGraph(
     isLoggedIn: Boolean,
     startDestination: String = if (isLoggedIn) Routes.HOME else Routes.SPLASH
 ) {
-    val repository = DependencyProvider.repository
-    val firebaseService = DependencyProvider.firebaseService
     val homeViewModel = remember { DependencyProvider.provideHomeViewModel() }
 
 
@@ -114,21 +103,8 @@ fun MainNavGraph(
         }
 
         composable(Routes.HOME) {
-            // Initialize FirebaseService and DataSources
-            val firebaseService = FirebaseService()
-
-            val userDataSource = UserDataSourceImpl(firebaseService)
-            val donorDataSource = DonorDataSourceImpl(firebaseService)
-            val appointmentDataSource = AppointmentDataSourceImpl(firebaseService)
-
-            // Inject dependencies into the DependencyProvider
-            DependencyProvider.firebaseService = firebaseService
-            DependencyProvider.repository = BloodDonationRepositoryImpl(
-                firebaseService = firebaseService,
-                userDataSource = userDataSource,
-                donorDataSource = donorDataSource,
-                appointmentDataSource = appointmentDataSource
-            )
+            // Use the dependencies already initialized in MainActivity.onCreate()
+            // Do not re-initialize to maintain singleton pattern
             val bloodRequestViewModel = DependencyProvider.provideBloodRequestViewModel()
 
             HomeScreen(

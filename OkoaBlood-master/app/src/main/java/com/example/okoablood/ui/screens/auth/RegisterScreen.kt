@@ -40,12 +40,6 @@ fun RegisterScreen(
 ) {
     val authState by viewModel.authState.collectAsState()
 
-    LaunchedEffect(authState) {
-        if (authState is AuthViewModel.AuthState.Authenticated) {
-            onRegisterSuccess()
-        }
-    }
-
     val scrollState = rememberScrollState()
 
     var name by rememberSaveable { mutableStateOf("") }
@@ -61,7 +55,8 @@ fun RegisterScreen(
     LaunchedEffect(authState) {
         when (authState) {
             is AuthViewModel.AuthState.Authenticated -> {
-                onNavigateToLogin() // make sure this navigates to an existing screen
+                onRegisterSuccess()
+                onNavigateToLogin()
             }
             is AuthViewModel.AuthState.Error -> {
                 val error = (authState as AuthViewModel.AuthState.Error).message
