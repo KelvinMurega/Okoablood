@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "179130274309",
+    "project_id": "okoablood",
+    "storage_bucket": "okoablood.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:179130274309:android:fa5a050f200c8bbb97826c",
+        "android_client_info": {
+          "package_name": "com.example.okoablood"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzHzeccZlwkKDM7dhpInLLjPBVKojUQ1g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
