@@ -1,7 +1,20 @@
 package com.example.okoablood.navigation
 
+import android.content.Intent
+import android.widget.Toast
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.okoablood.ui.components.*
+import com.example.okoablood.ui.screens.notifications.NotificationsScreen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,6 +33,7 @@ import com.example.okoablood.ui.screens.requests.NewBloodRequestScreen
 import com.example.okoablood.ui.screens.requests.RequestDetailsScreen
 import com.example.okoablood.ui.screens.splash.SplashScreen
 import com.example.okoablood.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 
 
 object Routes {
@@ -29,6 +43,7 @@ object Routes {
 
     const val HOME = "home"
     const val PROFILE = "profile"
+    const val NOTIFICATIONS = "notifications"
 
     const val ALL_DONORS = "all_donors"
     const val DONOR_DETAILS = "donor_details/{${NavArguments.DONOR_ID}}"
@@ -58,11 +73,10 @@ fun MainNavGraph(
                 onNavigateToLogin = { navController.navigate(Routes.LOGIN) },
                 onNavigateToHome = {
                     navController.navigate(Routes.HOME) {
-                        popUpTo(0) { inclusive = true } // ✅ Safe
+                        popUpTo(0) { inclusive = true }
                     }
-
-
-        }
+                },
+                isLoggedIn = isLoggedIn
             )
         }
 
@@ -103,44 +117,37 @@ fun MainNavGraph(
         }
 
         composable(Routes.HOME) {
-            // Use the dependencies already initialized in MainActivity.onCreate()
-            // Do not re-initialize to maintain singleton pattern
-            val bloodRequestViewModel = DependencyProvider.provideBloodRequestViewModel()
+            MainScreenWithNavigation(
+                navController = navController,
+                homeViewModel = homeViewModel,
+                currentRoute = Routes.HOME
+            )
+        }
 
-            HomeScreen(
-                onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
-                onNavigateToDonors = { navController.navigate(Routes.ALL_DONORS) },
-                onNavigateToRequests = { navController.navigate(Routes.ALL_REQUESTS) },
-                onNavigateToRequestDetails = { requestId ->
-                    navController.navigateToRequestDetails(requestId)
-                },
-                onNavigateToRequestBlood = { navController.navigate(Routes.NEW_REQUESTS) },
-                viewModel = homeViewModel,
-                bloodRequestViewModel = bloodRequestViewModel
+        composable(Routes.ALL_DONORS) {
+            MainScreenWithNavigation(
+                navController = navController,
+                homeViewModel = homeViewModel,
+                currentRoute = Routes.ALL_DONORS
+            )
+        }
+
+        composable(Routes.NOTIFICATIONS) {
+            MainScreenWithNavigation(
+                navController = navController,
+                homeViewModel = homeViewModel,
+                currentRoute = Routes.NOTIFICATIONS
             )
         }
 
         composable(Routes.PROFILE) {
-            val viewModel = remember { DependencyProvider.provideProfileViewModel() }
-
-            ProfileScreen(
-                viewModel = viewModel,
-                onBack = { navController.popBackStack() },
-                onLogout = {
-                    navController.navigate("login") { popUpTo("home") { inclusive = true } }
-                })
-        }
-
-
-        composable(Routes.ALL_DONORS) {
-            val donorViewModel = DependencyProvider.provideDonorViewModel()
-            AllDonorsScreen(
-                viewModel = donorViewModel,
-                onBack = { navController.popBackStack() },
-                onDonorSelected = { donorId -> navController.navigateToDonorDetails(donorId) },
-                onSearchDonors = { navController.navigate(Routes.SEARCH_DONORS) },
+            MainScreenWithNavigation(
+                navController = navController,
+                homeViewModel = homeViewModel,
+                currentRoute = Routes.PROFILE
             )
         }
+
 
         composable(Routes.DONOR_DETAILS) { backStackEntry ->
             val donorId = backStackEntry.arguments?.getString(NavArguments.DONOR_ID) ?: ""
@@ -204,6 +211,142 @@ fun MainNavGraph(
             )
         }
 
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MainScreenWithNavigation(
+    navController: NavHostController,
+    homeViewModel: HomeViewModel,
+    currentRoute: String
+) {
+    val context = LocalContext.current
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
+
+    // Drawer items
+    val drawerItems = listOf(
+        DrawerItem(
+            title = "Share App",
+            icon = Icons.Default.Share,
+            onClick = {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_SUBJECT, "OkoaBlood App")
+                    putExtra(Intent.EXTRA_TEXT, "Join me in saving lives with OkoaBlood! Download the app now.")
+                }
+                context.startActivity(Intent.createChooser(intent, "Share via"))
+            }
+        ),
+        DrawerItem(
+            title = "About Us",
+            icon = Icons.Default.Info,
+            onClick = {
+                // TODO: Navigate to About Us screen when implemented
+                Toast.makeText(context, "About Us coming soon!", Toast.LENGTH_SHORT).show()
+            }
+        ),
+        DrawerItem(
+            title = "Partners",
+            icon = Icons.Default.Business,
+            onClick = {
+                // TODO: Navigate to Partners screen when implemented
+                Toast.makeText(context, "Partners coming soon!", Toast.LENGTH_SHORT).show()
+            }
+        )
+    )
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            OkoaBloodNavigationDrawer(
+                drawerState = drawerState,
+                items = drawerItems,
+                onClose = { scope.launch { drawerState.close() } }
+            )
+        }
+    ) {
+        Scaffold(
+            bottomBar = {
+                // Show bottom nav only on main screens
+                if (currentRoute in listOf(
+                        Routes.HOME,
+                        Routes.ALL_DONORS,
+                        Routes.NOTIFICATIONS,
+                        Routes.PROFILE
+                    )
+                ) {
+                    OkoaBloodBottomNavigation(
+                        currentRoute = currentRoute,
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                // Pop up to the start destination of the graph to
+                                // avoid building up a large stack of destinations
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                // Avoid multiple copies of the same destination when
+                                // reselecting the same item
+                                launchSingleTop = true
+                                // Restore state when reselecting a previously selected item
+                                restoreState = true
+                            }
+                        }
+                    )
+                }
+            }
+        ) { paddingValues ->
+            when (currentRoute) {
+                Routes.HOME -> {
+                    val bloodRequestViewModel = DependencyProvider.provideBloodRequestViewModel()
+                    HomeScreen(
+                        viewModel = homeViewModel,
+                        onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
+                        onNavigateToDonors = { navController.navigate(Routes.ALL_DONORS) },
+                        onNavigateToRequests = { navController.navigate(Routes.ALL_REQUESTS) },
+                        onNavigateToRequestDetails = { requestId ->
+                            navController.navigateToRequestDetails(requestId)
+                        },
+                        onNavigateToRequestBlood = { navController.navigate(Routes.NEW_REQUESTS) },
+                        onNavigateToNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
+                        onOpenDrawer = { scope.launch { drawerState.open() } },
+                        bloodRequestViewModel = bloodRequestViewModel
+                    )
+                }
+                Routes.ALL_DONORS -> {
+                    val donorViewModel = DependencyProvider.provideDonorViewModel()
+                    AllDonorsScreen(
+                        viewModel = donorViewModel,
+                        onBack = { navController.popBackStack() },
+                        onDonorSelected = { donorId -> navController.navigateToDonorDetails(donorId) },
+                        onSearchDonors = { navController.navigate(Routes.SEARCH_DONORS) },
+                    )
+                }
+                Routes.NOTIFICATIONS -> {
+                    NotificationsScreen(
+                        onBack = { navController.popBackStack() },
+                        onRequestClick = { requestId ->
+                            navController.navigateToRequestDetails(requestId)
+                        }
+                    )
+                }
+                Routes.PROFILE -> {
+                    val viewModel = remember { DependencyProvider.provideProfileViewModel() }
+                    ProfileScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() },
+                        onLogout = {
+                            navController.navigate(Routes.LOGIN) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 

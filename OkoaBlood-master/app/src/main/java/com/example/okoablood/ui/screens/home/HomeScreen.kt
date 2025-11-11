@@ -1,17 +1,12 @@
 package com.example.okoablood.ui.screens.home
 
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,41 +27,25 @@ fun HomeScreen(
     onNavigateToRequests: () -> Unit,
     onNavigateToRequestDetails: (String) -> Unit,
     onNavigateToRequestBlood: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
+    onOpenDrawer: () -> Unit = {},
     bloodRequestViewModel: BloodRequestViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    
     Scaffold(
-
         topBar = {
-            OkoaBloodTopAppBar(title = "Okoa Blood",
+            OkoaBloodTopAppBar(
+                title = "OkoaBlood",
+                onBack = null,
+                showBackButton = false,
                 actions = {
-                    IconButton(onClick = onNavigateToProfile) {
-                        Icon(Icons.Default.Person, contentDescription = "Profile")
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
                     }
-                    IconButton(onClick = onNavigateToDonors) {
-                        Icon(Icons.Default.Group, contentDescription = "Donors")
-                    }
-                    IconButton(onClick = {
-                        Toast.makeText(context, "Notifications coming soon!", Toast.LENGTH_SHORT).show()
-                    }) {
-                        Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                    }
-
-                    IconButton(onClick = {
-                        val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "text/plain"
-                            putExtra(Intent.EXTRA_SUBJECT, "Okoa Blood App")
-                            putExtra(Intent.EXTRA_TEXT, "Join me in donating blood with Okoa Blood!")
-                        }
-                        context.startActivity(Intent.createChooser(intent, "Share via"))
-                    }) {
-                        Icon(Icons.Default.Share, contentDescription = "Share App")
-                    }
-
-
-                })
-
+                }
+            )
         },
         floatingActionButton = {
             FloatingActionButton(
@@ -99,25 +78,33 @@ fun HomeScreen(
                     }
                 }
 
-                uiState.bloodRequests.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        EmptyStateMessage(
-                            message = "No blood requests found.\nCreate a new request by tapping the + button."
-                        )
-                    }
-                }
-
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(bottom = 80.dp)
                     ) {
+                        // Quick Action Buttons Section
+                        item {
+                            QuickActionButtons(
+                                onFindDonors = onNavigateToDonors,
+                                onHospitals = {
+                                    // TODO: Navigate to hospitals screen when implemented
+                                    Toast.makeText(context, "Hospitals feature coming soon!", Toast.LENGTH_SHORT).show()
+                                },
+                                onUrgentRequests = onNavigateToNotifications
+                            )
+                        }
+
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
                         item {
                             Text(
                                 text = "Urgent Requests",
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(16.dp)
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
                         }
 
@@ -147,15 +134,101 @@ fun HomeScreen(
 
                         val recentRequests = uiState.bloodRequests.filter { !it.urgent }
 
-                        items(recentRequests) { request ->
-                            BloodRequestCard(
-                                bloodRequest = request,
-                                onClick = { onNavigateToRequestDetails(request.id) }
-                            )
+                        if (recentRequests.isEmpty() && urgentRequests.isEmpty()) {
+                            item {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    EmptyStateMessage(
+                                        message = "No blood requests found.\nCreate a new request by tapping the + button."
+                                    )
+                                }
+                            }
+                        } else {
+                            items(recentRequests) { request ->
+                                BloodRequestCard(
+                                    bloodRequest = request,
+                                    onClick = { onNavigateToRequestDetails(request.id) }
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun QuickActionButtons(
+    onFindDonors: () -> Unit,
+    onHospitals: () -> Unit,
+    onUrgentRequests: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        QuickActionButton(
+            title = "Find Donors",
+            icon = Icons.Default.Group,
+            onClick = onFindDonors,
+            modifier = Modifier.weight(1f)
+        )
+        QuickActionButton(
+            title = "Hospitals",
+            icon = Icons.Default.LocalHospital,
+            onClick = onHospitals,
+            modifier = Modifier.weight(1f)
+        )
+        QuickActionButton(
+            title = "Urgent",
+            icon = Icons.Default.Warning,
+            onClick = onUrgentRequests,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+fun QuickActionButton(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(32.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer
+            )
         }
     }
 }

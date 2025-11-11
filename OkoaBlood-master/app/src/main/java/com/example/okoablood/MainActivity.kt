@@ -45,7 +45,8 @@ class MainActivity : ComponentActivity() {
             OkoaBloodTheme {
                 val navController = rememberNavController()
                 val isLoggedIn = FirebaseAuth.getInstance().currentUser != null
-                val startDestination = if (isLoggedIn) Routes.HOME else Routes.LOGIN
+                // Always start with SplashScreen
+                val startDestination = Routes.SPLASH
 
                 MainNavGraph(
                     navController = navController,
