@@ -108,10 +108,13 @@ open suspend fun signUp(email: String, password: String): AuthUser? {
     open suspend fun getAllBloodRequests(): List<BloodRequest> {
         val snapshot = requestsCollection
             .whereEqualTo("status", "Active")
-            .orderBy("requestDate")
             .get()
             .await()
-        return snapshot.documents.mapNotNull { it.toObject(BloodRequest::class.java) }
+        // Sort in memory instead of using orderBy to avoid requiring a composite index
+        // Using sortedBy (ascending) to match original orderBy behavior - oldest requests first
+        return snapshot.documents
+            .mapNotNull { it.toObject(BloodRequest::class.java) }
+            .sortedBy { it.requestDate }
     }
 
     open suspend fun getBloodRequestsByUser(userId: String): List<BloodRequest> {
