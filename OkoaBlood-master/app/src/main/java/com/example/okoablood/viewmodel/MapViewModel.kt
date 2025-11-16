@@ -18,8 +18,11 @@ data class HospitalMarker(
 )
 
 class MapViewModel(
-    private val repository: BloodDonationRepository = DependencyProvider.repository
+    private val repository: BloodDonationRepository? = null
 ) : ViewModel() {
+    
+    private val actualRepository: BloodDonationRepository
+        get() = repository ?: DependencyProvider.repository
 
     private val _hospitalMarkers = MutableStateFlow<List<HospitalMarker>>(emptyList())
     val hospitalMarkers: StateFlow<List<HospitalMarker>> = _hospitalMarkers
@@ -31,6 +34,7 @@ class MapViewModel(
     val error: StateFlow<String?> = _error
 
     init {
+        // Delay initialization to ensure repository is ready
         loadBloodRequests()
     }
 
@@ -39,7 +43,7 @@ class MapViewModel(
             _isLoading.value = true
             _error.value = null
             try {
-                val requests = repository.getAllBloodRequests()
+                val requests = actualRepository.getAllBloodRequests()
                 val groupedByHospital = requests
                     .filter { it.hospital.isNotBlank() }
                     .groupBy { it.hospital.trim() }

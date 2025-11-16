@@ -38,6 +38,26 @@ fun MapScreen(
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(NAIROBI_CENTER, 11f)
     }
+    
+    // Initialize map properties with error handling
+    val mapProperties by remember {
+        mutableStateOf(
+            MapProperties(
+                mapType = MapType.NORMAL,
+                isMyLocationEnabled = false
+            )
+        )
+    }
+    
+    val mapUiSettings by remember {
+        mutableStateOf(
+            MapUiSettings(
+                zoomControlsEnabled = true,
+                compassEnabled = true,
+                myLocationButtonEnabled = false
+            )
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -71,15 +91,8 @@ fun MapScreen(
                     GoogleMap(
                         modifier = Modifier.fillMaxSize(),
                         cameraPositionState = cameraPositionState,
-                        properties = MapProperties(
-                            mapType = MapType.NORMAL,
-                            isMyLocationEnabled = false
-                        ),
-                        uiSettings = MapUiSettings(
-                            zoomControlsEnabled = true,
-                            compassEnabled = true,
-                            myLocationButtonEnabled = false
-                        )
+                        properties = mapProperties,
+                        uiSettings = mapUiSettings
                     ) {
                         // Add markers for each hospital
                         hospitalMarkers.forEach { marker ->

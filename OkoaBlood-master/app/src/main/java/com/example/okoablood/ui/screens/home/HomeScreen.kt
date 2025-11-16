@@ -1,6 +1,8 @@
  package com.example.okoablood.ui.screens.home
 
 import android.widget.Toast
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -33,6 +35,25 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    
+    // Filter state
+    var selectedBloodGroup by remember { mutableStateOf<String?>(null) }
+    var showUrgentOnly by remember { mutableStateOf(false) }
+    var bloodGroupExpanded by remember { mutableStateOf(false) }
+    
+    val bloodGroups = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
+    
+    // Apply filters to blood requests
+    val filteredRequests = remember(uiState.bloodRequests, selectedBloodGroup, showUrgentOnly) {
+        uiState.bloodRequests.filter { request ->
+            val matchesBloodGroup = selectedBloodGroup == null || request.bloodGroup.equals(selectedBloodGroup, ignoreCase = true)
+            val matchesUrgency = !showUrgentOnly || request.urgent
+            matchesBloodGroup && matchesUrgency
+        }
+    }
+    
+    val urgentRequests = filteredRequests.filter { it.urgent }
+    val nonUrgentRequests = filteredRequests.filter { !it.urgent }
     
     Scaffold(
         topBar = {
@@ -99,17 +120,47 @@ fun HomeScreen(
                         item {
                             Spacer(modifier = Modifier.height(8.dp))
                         }
-
+                        
+                        // Filter Section
                         item {
-                            Text(
-                                text = "Urgent Requests",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            BloodRequestFilters(
+                                selectedBloodGroup = selectedBloodGroup,
+                                onBloodGroupSelected = { selectedBloodGroup = it },
+                                showUrgentOnly = showUrgentOnly,
+                                onUrgentOnlyChanged = { showUrgentOnly = it },
+                                bloodGroupExpanded = bloodGroupExpanded,
+                                onBloodGroupExpandedChanged = { bloodGroupExpanded = it },
+                                bloodGroups = bloodGroups
                             )
                         }
 
-                        val urgentRequests = uiState.bloodRequests.filter { it.urgent }
+                        item {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (showUrgentOnly) "Urgent Requests" else "Urgent Requests",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                if (selectedBloodGroup != null || showUrgentOnly) {
+                                    TextButton(onClick = {
+                                        selectedBloodGroup = null
+                                        showUrgentOnly = false
+                                    }) {
+                                        Text("Clear Filters")
+                                    }
+                                }
+                            }
+                        }
 
                         if (urgentRequests.isEmpty()) {
                             item {
@@ -133,9 +184,7 @@ fun HomeScreen(
                             SectionHeader(title = "All Blood Requests")
                         }
 
-                        val recentRequests = uiState.bloodRequests.filter { !it.urgent }
-
-                        if (recentRequests.isEmpty() && urgentRequests.isEmpty()) {
+                        if (nonUrgentRequests.isEmpty() && urgentRequests.isEmpty()) {
                             item {
                                 Box(
                                     modifier = Modifier.fillMaxWidth(),
@@ -147,7 +196,7 @@ fun HomeScreen(
                                 }
                             }
                         } else {
-                            items(recentRequests) { request ->
+                            items(nonUrgentRequests) { request ->
                                 BloodRequestCard(
                                     bloodRequest = request,
                                     onClick = { onNavigateToRequestDetails(request.id) }
@@ -258,6 +307,135 @@ fun QuickActionButton(
                 fontWeight = FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
+        }
+    }
+}
+
+@Composable
+fun BloodRequestFilters(
+    selectedBloodGroup: String?,
+    onBloodGroupSelected: (String?) -> Unit,
+    showUrgentOnly: Boolean,
+    onUrgentOnlyChanged: (Boolean) -> Unit,
+    bloodGroupExpanded: Boolean,
+    onBloodGroupExpandedChanged: (Boolean) -> Unit,
+    bloodGroups: List<String>
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.FilterList,
+                    contentDescription = "Filters",
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Filters",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Blood Group Filter
+            Text(
+                text = "Blood Group",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onBloodGroupExpandedChanged(true) }
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outline,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = selectedBloodGroup ?: "All Blood Groups",
+                        color = if (selectedBloodGroup == null)
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        else
+                            MaterialTheme.colorScheme.onSurface
+                    )
+                    Icon(
+                        imageVector = if (bloodGroupExpanded)
+                            Icons.Default.ExpandLess
+                        else
+                            Icons.Default.ExpandMore,
+                        contentDescription = null
+                    )
+                }
+            }
+            DropdownMenu(
+                expanded = bloodGroupExpanded,
+                onDismissRequest = { onBloodGroupExpandedChanged(false) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                DropdownMenuItem(
+                    text = { Text("All Blood Groups") },
+                    onClick = {
+                        onBloodGroupSelected(null)
+                        onBloodGroupExpandedChanged(false)
+                    }
+                )
+                bloodGroups.forEach { group ->
+                    DropdownMenuItem(
+                        text = { Text(group) },
+                        onClick = {
+                            onBloodGroupSelected(group)
+                            onBloodGroupExpandedChanged(false)
+                        }
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Urgency Filter
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Show Urgent Only",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Filter to show only urgent requests",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+                Switch(
+                    checked = showUrgentOnly,
+                    onCheckedChange = onUrgentOnlyChanged
+                )
+            }
         }
     }
 }
