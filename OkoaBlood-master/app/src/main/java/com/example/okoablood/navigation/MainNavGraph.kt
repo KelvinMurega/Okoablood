@@ -161,6 +161,15 @@ fun MainNavGraph(
             )
         }
 
+        composable(Routes.MAP) {
+            MainScreenWithNavigation(
+                navController = navController,
+                homeViewModel = homeViewModel,
+                currentRoute = Routes.MAP,
+                profileViewModel = profileViewModel // Pass shared VM
+            )
+        }
+
 
         composable(Routes.DONOR_DETAILS) { backStackEntry ->
             val donorId = backStackEntry.arguments?.getString(NavArguments.DONOR_ID) ?: ""
@@ -308,7 +317,7 @@ fun MainScreenWithNavigation(
                 // Show bottom nav only on main screens
                 if (currentRoute in listOf(
                         Routes.HOME,
-                        Routes.ALL_DONORS,
+                        Routes.MAP,
                         Routes.NOTIFICATIONS,
                         Routes.PROFILE
                     )
