@@ -11,30 +11,46 @@ $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
 $adbPath = "$env:LOCALAPPDATA\Android\Sdk\platform-tools"
 if (Test-Path $adbPath) {
     $env:PATH = "$adbPath;$env:PATH"
-    Write-Host "✓ ADB found" -ForegroundColor Green
+    Write-Host "ADB found" -ForegroundColor Green
 } else {
-    Write-Host "✗ ADB not found. Please install Android SDK Platform Tools." -ForegroundColor Red
+    Write-Host "ADB not found. Please install Android SDK Platform Tools." -ForegroundColor Red
     exit 1
 }
 
 # Check for connected device
-Write-Host "`nChecking for connected devices..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Checking for connected devices..." -ForegroundColor Yellow
 $devices = adb devices
 if ($devices -match "device$") {
-    Write-Host "✓ Device connected" -ForegroundColor Green
+    Write-Host "Device connected" -ForegroundColor Green
 } else {
-    Write-Host "✗ No device found. Please connect your phone and enable USB debugging." -ForegroundColor Red
+    Write-Host "No device found. Please connect your phone and enable USB debugging." -ForegroundColor Red
     exit 1
 }
 
 # Build and install
-Write-Host "`nBuilding and installing app..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Building and installing app..." -ForegroundColor Yellow
 .\gradlew.bat installDebug
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "`n✓ App installed successfully!" -ForegroundColor Green
-    Write-Host "The app should launch on your phone automatically." -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "App installed successfully!" -ForegroundColor Green
+    
+    # Launch the app
+    Write-Host ""
+    Write-Host "Launching app..." -ForegroundColor Yellow
+    adb shell am start -n com.example.okoablood/.MainActivity
+    
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "App launched successfully!" -ForegroundColor Green
+        Write-Host "The app should now be running on your phone." -ForegroundColor Cyan
+    } else {
+        Write-Host "App installed but failed to launch automatically." -ForegroundColor Yellow
+        Write-Host "Please launch it manually from your phone." -ForegroundColor Cyan
+    }
 } else {
-    Write-Host "`n✗ Build failed. Check the error messages above." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Build failed. Check the error messages above." -ForegroundColor Red
+    exit 1
 }
-

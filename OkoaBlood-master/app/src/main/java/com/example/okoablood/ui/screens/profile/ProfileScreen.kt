@@ -197,14 +197,62 @@ fun ProfileScreen(
                                     color = MaterialTheme.colorScheme.primary
                                 )
 
-
-
                                 Spacer(modifier = Modifier.height(4.dp))
 
                                 Text(
                                     text = "Last Donation: ${uiState.userProfile?.lastDonationDate ?: "Not available"}",
                                     style = MaterialTheme.typography.bodyMedium
                                 )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                // Display donation eligibility status
+                                val eligibility = viewModel.donationEligibility
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = if (eligibility.isEligible) {
+                                            MaterialTheme.colorScheme.primaryContainer
+                                        } else {
+                                            MaterialTheme.colorScheme.errorContainer
+                                        }
+                                    )
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(12.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(
+                                            text = if (eligibility.isEligible) {
+                                                "✓ Eligible to Donate"
+                                            } else {
+                                                "⏳ Not Eligible Yet"
+                                            },
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (eligibility.isEligible) {
+                                                MaterialTheme.colorScheme.onPrimaryContainer
+                                            } else {
+                                                MaterialTheme.colorScheme.onErrorContainer
+                                            }
+                                        )
+                                        if (!eligibility.isEligible && eligibility.daysRemaining > 0) {
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "Wait ${eligibility.daysRemaining} more day${if (eligibility.daysRemaining == 1) "" else "s"} before next donation",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
+                                            )
+                                        } else if (eligibility.isEligible) {
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(
+                                                text = "90 days have passed since your last donation",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                            )
+                                        }
+                                    }
+                                }
                             }
 
 

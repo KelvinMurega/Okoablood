@@ -19,6 +19,13 @@ class ProfileViewModel(
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
     val uiState: StateFlow<ProfileUiState> = _uiState
 
+    /**
+     * Computed property that returns the donation eligibility status for the current user
+     */
+    val donationEligibility: User.DonationEligibility
+        get() = _uiState.value.userProfile?.checkDonationEligibility() 
+            ?: User.DonationEligibility(isEligible = false, daysRemaining = 0)
+
     fun loadUserProfile(retries: Int = 2) {
         val currentUserId = firebaseService.getCurrentUser()?.uid ?: return
         viewModelScope.launch {
