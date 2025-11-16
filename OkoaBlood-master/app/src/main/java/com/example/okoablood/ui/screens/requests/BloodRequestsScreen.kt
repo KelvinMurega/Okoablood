@@ -1,32 +1,26 @@
 package com.example.okoablood.ui.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import com.example.okoablood.data.model.BloodRequest
-import com.example.okoablood.ui.theme.OkoaBloodTheme
 import com.example.okoablood.viewmodel.BloodRequestViewModel
+
+// --- IMPORTS FOR YOUR STANDARD COMPONENTS ---
+import com.example.okoablood.ui.components.OkoaBloodTopAppBar
+// --- IMPORT THE CENTRALIZED SearchField ---
+import com.example.okoablood.ui.components.SearchField
+import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BloodRequestsScreen(
     viewModel: BloodRequestViewModel,
     onSubmitRequest: () -> Unit,
-    onBack: () -> Unit
-
-    ) {
+    onBack: () -> Unit,
+    onRequestSelected: (String) -> Unit
+) {
     // Fetch filtered blood requests
     val bloodRequestsState = viewModel.filteredBloodRequestsState.collectAsState()
 
@@ -38,27 +32,38 @@ fun BloodRequestsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = "Blood Requests") }
+            OkoaBloodTopAppBar(
+                title = "Search Requests",
+                showBackButton = true,
+                onBack = onBack
             )
         }
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues)) {
+
+            // --- USE THE CENTRALIZED SearchField ---
             SearchField(
                 query = searchQuery,
-                onQueryChanged = { searchQuery = it }
+                onQueryChanged = { searchQuery = it },
+                placeholderText = "Search by blood group (e.g., A+)"
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             when (val state = bloodRequestsState.value) {
                 is BloodRequestViewModel.BloodRequestsState.Loading -> {
+                    // This function now comes from AllRequestScreen.kt
                     LoadingState()
                 }
                 is BloodRequestViewModel.BloodRequestsState.Success -> {
-                    BloodRequestsList(bloodRequests = state.requests)
+                    // This function now comes from AllRequestScreen.kt
+                    BloodRequestsList(
+                        bloodRequests = state.requests,
+                        onRequestSelected = onRequestSelected
+                    )
                 }
                 is BloodRequestViewModel.BloodRequestsState.Error -> {
+                    // This function now comes from AllRequestScreen.kt
                     ErrorState(message = state.message)
                 }
             }
@@ -66,20 +71,4 @@ fun BloodRequestsScreen(
     }
 }
 
-@Composable
-fun SearchField(query: String, onQueryChanged: (String) -> Unit) {
-    BasicTextField(
-        value = query,
-        onValueChange = onQueryChanged,
-        keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Search
-        ),
-        keyboardActions = KeyboardActions(onSearch = { /* handle search */ }),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .height(56.dp)
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 16.dp)
-    )
-}
+// --- SearchField function is REMOVED from this file ---

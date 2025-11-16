@@ -1,4 +1,4 @@
- package com.example.okoablood.ui.screens.home
+package com.example.okoablood.ui.screens.home
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
@@ -24,7 +24,7 @@ fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToProfile: () -> Unit,
     onNavigateToDonors: () -> Unit,
-    onNavigateToRequests: () -> Unit,
+    onNavigateToRequests: () -> Unit, // This will be used by the "See All" button
     onNavigateToRequestDetails: (String) -> Unit,
     onNavigateToRequestBlood: () -> Unit,
     onNavigateToNotifications: () -> Unit,
@@ -33,7 +33,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-    
+
     Scaffold(
         topBar = {
             OkoaBloodTopAppBar(
@@ -99,14 +99,29 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
+                        // --- MODIFIED SECTION ---
+                        // Replaced the simple Text item with a Row
                         item {
-                            Text(
-                                text = "Urgent Requests",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Urgent Requests",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                // This button navigates to your "All Requests" screen
+                                TextButton(onClick = onNavigateToRequests) {
+                                    Text("See All")
+                                }
+                            }
                         }
+                        // --- END OF MODIFIED SECTION ---
+
 
                         val urgentRequests = uiState.bloodRequests.filter { it.urgent }
 
@@ -128,31 +143,10 @@ fun HomeScreen(
                             }
                         }
 
-                        item {
-                            SectionHeader(title = "All Blood Requests")
-                        }
-
-                        val recentRequests = uiState.bloodRequests.filter { !it.urgent }
-
-                        if (recentRequests.isEmpty() && urgentRequests.isEmpty()) {
-                            item {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    EmptyStateMessage(
-                                        message = "No blood requests found.\nCreate a new request by tapping the + button."
-                                    )
-                                }
-                            }
-                        } else {
-                            items(recentRequests) { request ->
-                                BloodRequestCard(
-                                    bloodRequest = request,
-                                    onClick = { onNavigateToRequestDetails(request.id) }
-                                )
-                            }
-                        }
+                        // --- REMOVED SECTION ---
+                        // The "All Blood Requests" SectionHeader and 
+                        // the items(recentRequests) list have been removed.
+                        // --- END OF REMOVED SECTION ---
                     }
                 }
             }
@@ -232,5 +226,3 @@ fun QuickActionButton(
         }
     }
 }
-
-

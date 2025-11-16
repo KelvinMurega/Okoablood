@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -18,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -105,6 +108,43 @@ fun OkoaBloodTextField(
         },
     )
 }
+
+// --- THIS IS THE NEW, CENTRALIZED SearchField ---
+@Composable
+fun SearchField(
+    query: String,
+    onQueryChanged: (String) -> Unit,
+    placeholderText: String,
+    modifier: Modifier = Modifier
+) {
+    BasicTextField(
+        value = query,
+        onValueChange = onQueryChanged,
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Search
+        ),
+        keyboardActions = KeyboardActions(onSearch = { /* No action needed */ }),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp) // Adjusted padding
+            .height(56.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)) // Added shape
+            .padding(horizontal = 16.dp),
+        decorationBox = { innerTextField ->
+            Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.fillMaxWidth()) {
+                if (query.isEmpty()) {
+                    Text(
+                        text = placeholderText, // Use the parameter
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                innerTextField()
+            }
+        },
+        singleLine = true
+    )
+}
+
 
 @Composable
 fun OkoaBloodButton(
@@ -221,14 +261,13 @@ fun BloodRequestCard(
     val formattedDate = dateFormat.format(Date(bloodRequest.requestDate))
     val urgencyText = if (bloodRequest.urgent) "Urgent" else "Normal"
 
-    Card(
+    // Replaced Card with Column for a "list view" style
+    Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .clickable { onClick() },
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(8.dp)
+            .clickable { onClick() } // Make the whole item clickable
     ) {
+        // This Column provides the padding that the Card used to
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
@@ -291,6 +330,13 @@ fun BloodRequestCard(
                 )
             }
         }
+
+        // Add a divider at the bottom of the item
+        Divider(
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            thickness = 1.dp,
+            modifier = Modifier.padding(horizontal = 16.dp) // Indent the divider
+        )
     }
 }
 

@@ -35,7 +35,6 @@ import com.example.okoablood.ui.screens.requests.NewBloodRequestScreen
 import com.example.okoablood.ui.screens.requests.RequestDetailsScreen
 import com.example.okoablood.ui.screens.splash.SplashScreen
 import com.example.okoablood.viewmodel.HomeViewModel
-// --- IMPORT THE VIEWMODEL ---
 import com.example.okoablood.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
 
@@ -69,8 +68,6 @@ fun MainNavGraph(
     startDestination: String = if (isLoggedIn) Routes.HOME else Routes.SPLASH
 ) {
     val homeViewModel = remember { DependencyProvider.provideHomeViewModel() }
-
-    // --- FIX: CREATE VIEWMODEL HERE ONCE ---
     val profileViewModel: ProfileViewModel = remember {
         DependencyProvider.provideProfileViewModel()
     }
@@ -129,7 +126,7 @@ fun MainNavGraph(
                 navController = navController,
                 homeViewModel = homeViewModel,
                 currentRoute = Routes.HOME,
-                profileViewModel = profileViewModel // Pass shared VM
+                profileViewModel = profileViewModel
             )
         }
 
@@ -138,7 +135,7 @@ fun MainNavGraph(
                 navController = navController,
                 homeViewModel = homeViewModel,
                 currentRoute = Routes.ALL_DONORS,
-                profileViewModel = profileViewModel // Pass shared VM
+                profileViewModel = profileViewModel
             )
         }
 
@@ -147,7 +144,7 @@ fun MainNavGraph(
                 navController = navController,
                 homeViewModel = homeViewModel,
                 currentRoute = Routes.NOTIFICATIONS,
-                profileViewModel = profileViewModel // Pass shared VM
+                profileViewModel = profileViewModel
             )
         }
 
@@ -156,7 +153,7 @@ fun MainNavGraph(
                 navController = navController,
                 homeViewModel = homeViewModel,
                 currentRoute = Routes.PROFILE,
-                profileViewModel = profileViewModel // Pass shared VM
+                profileViewModel = profileViewModel
             )
         }
 
@@ -207,7 +204,8 @@ fun MainNavGraph(
             BloodRequestsScreen(
                 viewModel = bloodRequestViewModel,
                 onSubmitRequest = { navController.popBackStack() },
-                onBack = { navController.popBackStack() }
+                onBack = { navController.popBackStack() },
+                onRequestSelected = { requestId -> navController.navigateToRequestDetails(requestId) }
             )
         }
 
@@ -225,7 +223,6 @@ fun MainNavGraph(
         }
 
         composable(Routes.SCHEDULE_DONATION) {
-            // --- FIX: Use the shared VM ---
             ScheduleDonationScreen(
                 viewModel = profileViewModel,
                 onBack = { navController.popBackStack() },
@@ -236,7 +233,6 @@ fun MainNavGraph(
         }
 
         composable(Routes.EDIT_PROFILE) {
-            // --- FIX: Use the shared VM ---
             EditProfileScreen(
                 viewModel = profileViewModel,
                 onBack = { navController.popBackStack() }
@@ -252,7 +248,7 @@ fun MainScreenWithNavigation(
     navController: NavHostController,
     homeViewModel: HomeViewModel,
     currentRoute: String,
-    profileViewModel: ProfileViewModel // <-- FIX: ADDED PARAMETER
+    profileViewModel: ProfileViewModel
 ) {
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -367,7 +363,6 @@ fun MainScreenWithNavigation(
                     )
                 }
                 Routes.PROFILE -> {
-                    // --- FIX: USE THE SHARED VM ---
                     ProfileScreen(
                         viewModel = profileViewModel,
                         navController = navController,

@@ -7,27 +7,33 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.okoablood.data.model.BloodRequest
-import com.example.okoablood.viewmodel.BloodRequestViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.example.okoablood.data.repository.BloodDonationRepository
+import androidx.compose.ui.unit.dp
+import com.example.okoablood.data.model.BloodRequest
+import com.example.okoablood.viewmodel.BloodRequestViewModel
 
+// --- IMPORTS FOR YOUR STANDARD COMPONENTS ---
+import com.example.okoablood.ui.components.BloodRequestCard
+import com.example.okoablood.ui.components.EmptyStateMessage
+import com.example.okoablood.ui.components.ErrorMessage
+import com.example.okoablood.ui.components.LoadingIndicator
+import com.example.okoablood.ui.components.OkoaBloodTopAppBar
+// --- IMPORT THE CENTRALIZED SearchField ---
+import com.example.okoablood.ui.components.SearchField
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AllRequestsScreen(
-    viewModel: BloodRequestViewModel = viewModel(),
+    viewModel: BloodRequestViewModel,
     onBack: () -> Unit,
-    onRequestSelected: @Composable (String) -> Unit,
+    onRequestSelected: (String) -> Unit,
     onDonorSelected: (String) -> Unit,
     onCreateNewRequest: () -> Unit,
-
-    ) {
+) {
     val bloodRequestsState by viewModel.bloodRequestsState.collectAsState()
+
+    var searchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         viewModel.loadAllBloodRequests()
@@ -35,65 +41,90 @@ fun AllRequestsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("All Blood Requests") }
+            OkoaBloodTopAppBar(
+                title = "All Blood Requests",
+                showBackButton = true,
+                onBack = onBack
             )
         }
     ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            when (val state = bloodRequestsState) {
-                is BloodRequestViewModel.BloodRequestsState.Loading -> LoadingState()
-                is BloodRequestViewModel.BloodRequestsState.Success -> BloodRequestsList(state.requests)
-                is BloodRequestViewModel.BloodRequestsState.Error -> ErrorState(state.message)
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+
+            // --- USE THE CENTRALIZED SearchField ---
+            SearchField(
+                query = searchQuery,
+                onQueryChanged = { searchQuery = it },
+                placeholderText = "Filter by location (e.g., Nairobi)"
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                when (val state = bloodRequestsState) {
+                    is BloodRequestViewModel.BloodRequestsState.Loading -> LoadingState()
+                    is BloodRequestViewModel.BloodRequestsState.Success -> {
+
+                        val filteredList = if (searchQuery.isEmpty()) {
+                            state.requests
+                        } else {
+                            state.requests.filter {
+                                it.location.contains(searchQuery, ignoreCase = true)
+                            }
+                        }
+
+                        BloodRequestsList(
+                            bloodRequests = filteredList,
+                            onRequestSelected = onRequestSelected
+                        )
+                    }
+                    is BloodRequestViewModel.BloodRequestsState.Error -> ErrorState(state.message)
+                }
             }
         }
     }
 }
 
+// --- SearchField function is REMOVED from this file ---
+
 @Composable
 fun LoadingState() {
-    Box(
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        LoadingIndicator()
+    }
+}
+
+@Composable
+fun BloodRequestsList(
+    bloodRequests: List<BloodRequest>,
+    onRequestSelected: (String) -> Unit
+) {
+    if (bloodRequests.isEmpty()) {
+        EmptyStateMessage(message = "No blood requests found.")
+        return
+    }
+
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        contentPadding = PaddingValues(bottom = 16.dp)
     ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
-fun BloodRequestsList(bloodRequests: List<BloodRequest>) {
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(bloodRequests) { request ->
-            BloodRequestItem(bloodRequest = request)
-        }
-    }
-}
-
-@Composable
-fun BloodRequestItem(bloodRequest: BloodRequest) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Blood Type: ${bloodRequest.bloodGroup}", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Urgency: ${bloodRequest.urgent}", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Location: ${bloodRequest.location}", style = MaterialTheme.typography.bodyMedium)
+            BloodRequestCard(
+                bloodRequest = request,
+                onClick = { onRequestSelected(request.id) }
+            )
         }
     }
 }
 
 @Composable
 fun ErrorState(message: String) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(text = "Error: $message", color = MaterialTheme.colorScheme.error)
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        ErrorMessage(message = message)
     }
 }
-

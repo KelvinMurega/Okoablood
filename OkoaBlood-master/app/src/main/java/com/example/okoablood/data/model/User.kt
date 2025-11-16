@@ -38,10 +38,12 @@ data class User(
         }
 
         // If no last donation date, user is eligible
-        val lastDonation = lastDonationDate ?: return DonationEligibility(isEligible = true)
+        val lastDonation = lastDonationDate ?:
+        return DonationEligibility(isEligible = true)
 
         // Try to parse the last donation date
-        val lastDonationDateParsed = parseDate(lastDonation) ?: return DonationEligibility(isEligible = true)
+        val lastDonationDateParsed = parseDate(lastDonation) ?:
+        return DonationEligibility(isEligible = true)
 
         // Calculate days since last donation
         val today = Calendar.getInstance()
@@ -54,10 +56,10 @@ data class User(
         val daysSinceLastDonation = (diffInMillis / (1000 * 60 * 60 * 24)).toInt()
 
         // Check if 90 days have passed
-        if (daysSinceLastDonation >= 90) {
+        if (daysSinceLastDonation >= 60) {
             return DonationEligibility(isEligible = true)
         } else {
-            val daysRemaining = 90 - daysSinceLastDonation
+            val daysRemaining = 60 - daysSinceLastDonation
             return DonationEligibility(isEligible = false, daysRemaining = daysRemaining)
         }
     }
@@ -100,7 +102,7 @@ data class User(
 companion object {
     val EMPTY = User(
         id = "",
-        name = "Unknown",
+        name = "",
         email = "",
         phoneNumber = "",
         bloodGroup = "N/A",
