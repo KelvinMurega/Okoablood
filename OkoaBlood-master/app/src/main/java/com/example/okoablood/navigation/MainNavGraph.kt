@@ -42,6 +42,7 @@ object Routes {
     const val REGISTER = "register"
 
     const val HOME = "home"
+    const val MAP = "map"
     const val PROFILE = "profile"
     const val NOTIFICATIONS = "notifications"
 
@@ -328,6 +329,15 @@ fun MainScreenWithNavigation(
                 Routes.NOTIFICATIONS -> {
                     NotificationsScreen(
                         onBack = { navController.popBackStack() },
+                        onRequestClick = { requestId ->
+                            navController.navigateToRequestDetails(requestId)
+                        }
+                    )
+                }
+                Routes.MAP -> {
+                    val mapViewModel = remember { DependencyProvider.provideMapViewModel() }
+                    com.example.okoablood.ui.screens.map.MapScreen(
+                        viewModel = mapViewModel,
                         onRequestClick = { requestId ->
                             navController.navigateToRequestDetails(requestId)
                         }

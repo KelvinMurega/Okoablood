@@ -91,7 +91,8 @@ fun HomeScreen(
                                     // TODO: Navigate to hospitals screen when implemented
                                     Toast.makeText(context, "Hospitals feature coming soon!", Toast.LENGTH_SHORT).show()
                                 },
-                                onUrgentRequests = onNavigateToNotifications
+                                onUrgentRequests = onNavigateToNotifications,
+                                onRequestBlood = onNavigateToRequestBlood
                             )
                         }
 
@@ -165,32 +166,60 @@ fun QuickActionButtons(
     onFindDonors: () -> Unit,
     onHospitals: () -> Unit,
     onUrgentRequests: () -> Unit,
+    onRequestBlood: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    Column(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        QuickActionButton(
-            title = "Find Donors",
-            icon = Icons.Default.Group,
-            onClick = onFindDonors,
-            modifier = Modifier.weight(1f)
-        )
-        QuickActionButton(
-            title = "Hospitals",
-            icon = Icons.Default.LocalHospital,
-            onClick = onHospitals,
-            modifier = Modifier.weight(1f)
-        )
-        QuickActionButton(
-            title = "Urgent",
-            icon = Icons.Default.Warning,
-            onClick = onUrgentRequests,
-            modifier = Modifier.weight(1f)
-        )
+        // Request Blood Button - Prominent
+        Button(
+            onClick = onRequestBlood,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Default.Add,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Request Blood",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        
+        // Other Quick Actions
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            QuickActionButton(
+                title = "Find Donors",
+                icon = Icons.Default.Group,
+                onClick = onFindDonors,
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionButton(
+                title = "Hospitals",
+                icon = Icons.Default.LocalHospital,
+                onClick = onHospitals,
+                modifier = Modifier.weight(1f)
+            )
+            QuickActionButton(
+                title = "Urgent",
+                icon = Icons.Default.Warning,
+                onClick = onUrgentRequests,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 

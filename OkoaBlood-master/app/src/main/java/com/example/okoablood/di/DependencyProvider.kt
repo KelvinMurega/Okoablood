@@ -9,6 +9,7 @@ import com.example.okoablood.ui.viewmodels.RequestDetailsViewModel
 import com.example.okoablood.viewmodel.BloodRequestViewModel
 import com.example.okoablood.viewmodel.DonorViewModel
 import com.example.okoablood.viewmodel.HomeViewModel
+import com.example.okoablood.viewmodel.MapViewModel
 import com.example.okoablood.viewmodel.ProfileViewModel
 
 object DependencyProvider {
@@ -33,4 +34,6 @@ object DependencyProvider {
         requestRepository = requestRepository,
         repository = repository
     )
+    
+    fun provideMapViewModel() = MapViewModel(repository)
 }
