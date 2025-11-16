@@ -23,7 +23,7 @@ class ProfileViewModel(
      * Computed property that returns the donation eligibility status for the current user
      */
     val donationEligibility: User.DonationEligibility
-        get() = _uiState.value.userProfile?.checkDonationEligibility() 
+        get() = _uiState.value.userProfile?.checkDonationEligibility()
             ?: User.DonationEligibility(isEligible = false, daysRemaining = 0)
 
     fun loadUserProfile(retries: Int = 2) {
@@ -100,21 +100,39 @@ class ProfileViewModel(
         }
     }
 
+    // --- THIS FUNCTION HAS BEEN UPDATED ---
     fun registerAsDonor(donor: Donor) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            // 1. Register the Donor in 'donors' collection
             val result = repository.registerDonor(donor)
-            _uiState.value = if (result.isSuccess) {
-                _uiState.value.copy(
-                    isLoading = false,
-                    donorRegistrationState = ProfileUiState.DonorRegistrationState.Success,
-                    error = null
-                )
+
+            if (result.isSuccess) {
+                // 2. Get the current user
+                val currentUser = _uiState.value.userProfile
+                if (currentUser != null) {
+                    // 3. Create an updated user with isDonor = true
+                    val updatedUser = currentUser.copy(isDonor = true)
+
+                    // 4. Call your existing updateProfile function to save the user
+                    updateProfile(updatedUser)
+
+                    // 5. Update UI state (updateProfile will handle this)
+                    _uiState.value = _uiState.value.copy(
+                        donorRegistrationState = ProfileUiState.DonorRegistrationState.Success
+                    )
+                } else {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = "Failed to update user profile after donor registration."
+                    )
+                }
             } else {
-                _uiState.value.copy(
+                // Donor registration failed
+                _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     donorRegistrationState = ProfileUiState.DonorRegistrationState.Error("Registration failed"),
-                    error = null
+                    error = "Donor registration failed"
                 )
             }
         }

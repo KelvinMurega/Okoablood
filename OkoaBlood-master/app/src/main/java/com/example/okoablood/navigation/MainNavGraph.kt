@@ -29,10 +29,14 @@ import com.example.okoablood.ui.screens.donors.DonorDetailsScreen
 import com.example.okoablood.ui.screens.donors.SearchDonorScreen
 import com.example.okoablood.ui.screens.home.HomeScreen
 import com.example.okoablood.ui.screens.profile.ProfileScreen
+import com.example.okoablood.ui.screens.profile.ScheduleDonationScreen
+import com.example.okoablood.ui.screens.profile.EditProfileScreen
 import com.example.okoablood.ui.screens.requests.NewBloodRequestScreen
 import com.example.okoablood.ui.screens.requests.RequestDetailsScreen
 import com.example.okoablood.ui.screens.splash.SplashScreen
 import com.example.okoablood.viewmodel.HomeViewModel
+// --- IMPORT THE VIEWMODEL ---
+import com.example.okoablood.viewmodel.ProfileViewModel
 import kotlinx.coroutines.launch
 
 
@@ -54,6 +58,9 @@ object Routes {
     const val NEW_REQUESTS = "new_requests"
     const val BLOOD_REQUESTS = "bloodrequests"
     const val REQUEST_DETAILS = "request_details/{${NavArguments.REQUEST_ID}}"
+
+    const val SCHEDULE_DONATION = "schedule_donation"
+    const val EDIT_PROFILE = "edit_profile"
 }
 
 @Composable
@@ -64,6 +71,10 @@ fun MainNavGraph(
 ) {
     val homeViewModel = remember { DependencyProvider.provideHomeViewModel() }
 
+    // --- FIX: CREATE VIEWMODEL HERE ONCE ---
+    val profileViewModel: ProfileViewModel = remember {
+        DependencyProvider.provideProfileViewModel()
+    }
 
     NavHost(
         navController = navController,
@@ -88,14 +99,13 @@ fun MainNavGraph(
                 navController = navController,
                 onLoginSuccess = {
                     navController.navigate(Routes.HOME) {
-                        popUpTo(0) { inclusive = true } // ✅ Safe
+                        popUpTo(0) { inclusive = true }
                     }
-
-
-        },
+                },
                 onNavigateToRegister = {
                     navController.navigate("register")
-                }            )
+                }
+            )
         }
 
         composable(Routes.REGISTER) {
@@ -103,11 +113,9 @@ fun MainNavGraph(
             RegisterScreen(
                 onRegisterSuccess = {
                     navController.navigate(Routes.HOME) {
-                        popUpTo(0) { inclusive = true } // ✅ Safe
+                        popUpTo(0) { inclusive = true }
                     }
-
-
-        },
+                },
                 onNavigateToLogin = {
                     navController.navigate(Routes.LOGIN)
                 }
@@ -121,7 +129,8 @@ fun MainNavGraph(
             MainScreenWithNavigation(
                 navController = navController,
                 homeViewModel = homeViewModel,
-                currentRoute = Routes.HOME
+                currentRoute = Routes.HOME,
+                profileViewModel = profileViewModel // Pass shared VM
             )
         }
 
@@ -129,7 +138,8 @@ fun MainNavGraph(
             MainScreenWithNavigation(
                 navController = navController,
                 homeViewModel = homeViewModel,
-                currentRoute = Routes.ALL_DONORS
+                currentRoute = Routes.ALL_DONORS,
+                profileViewModel = profileViewModel // Pass shared VM
             )
         }
 
@@ -137,7 +147,8 @@ fun MainNavGraph(
             MainScreenWithNavigation(
                 navController = navController,
                 homeViewModel = homeViewModel,
-                currentRoute = Routes.NOTIFICATIONS
+                currentRoute = Routes.NOTIFICATIONS,
+                profileViewModel = profileViewModel // Pass shared VM
             )
         }
 
@@ -145,7 +156,8 @@ fun MainNavGraph(
             MainScreenWithNavigation(
                 navController = navController,
                 homeViewModel = homeViewModel,
-                currentRoute = Routes.PROFILE
+                currentRoute = Routes.PROFILE,
+                profileViewModel = profileViewModel // Pass shared VM
             )
         }
 
@@ -184,7 +196,8 @@ fun MainNavGraph(
             NewBloodRequestScreen(
                 viewModel = bloodRequestViewModel,
                 onRequestSubmitted = { navController.popBackStack()
-                    homeViewModel.loadBloodRequests()                },
+                    homeViewModel.loadBloodRequests()
+                },
                 onBack = { navController.popBackStack() }
             )
         }
@@ -200,15 +213,34 @@ fun MainNavGraph(
         }
 
         composable("request_details/{requestId}") { backStackEntry ->
-            val requestId = backStackEntry.arguments?.getString("requestId") ?: ""
+            val requestId = backStackEntry.arguments?.getString("requestId")
             val viewModel = remember(requestId) {
-                DependencyProvider.provideRequestDetailsViewModel(requestId)
+                DependencyProvider.provideRequestDetailsViewModel(requestId ?: "")
             }
 
             RequestDetailsScreen(
-                id = requestId,
+                id = requestId ?: "",
                 onBack = { navController.popBackStack() },
                 viewModel = viewModel
+            )
+        }
+
+        composable(Routes.SCHEDULE_DONATION) {
+            // --- FIX: Use the shared VM ---
+            ScheduleDonationScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() },
+                onDonationScheduled = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        composable(Routes.EDIT_PROFILE) {
+            // --- FIX: Use the shared VM ---
+            EditProfileScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -220,7 +252,8 @@ fun MainNavGraph(
 fun MainScreenWithNavigation(
     navController: NavHostController,
     homeViewModel: HomeViewModel,
-    currentRoute: String
+    currentRoute: String,
+    profileViewModel: ProfileViewModel // <-- FIX: ADDED PARAMETER
 ) {
     val context = LocalContext.current
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -344,9 +377,10 @@ fun MainScreenWithNavigation(
                     )
                 }
                 Routes.PROFILE -> {
-                    val viewModel = remember { DependencyProvider.provideProfileViewModel() }
+                    // --- FIX: USE THE SHARED VM ---
                     ProfileScreen(
-                        viewModel = viewModel,
+                        viewModel = profileViewModel,
+                        navController = navController,
                         onBack = { navController.popBackStack() },
                         onLogout = {
                             navController.navigate(Routes.LOGIN) {

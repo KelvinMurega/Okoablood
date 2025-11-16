@@ -3,8 +3,6 @@ package com.example.okoablood
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.navigation.compose.rememberNavController
 import com.example.okoablood.data.datasource.impl.DonorDataSourceImpl
 import com.example.okoablood.data.datasource.impl.UserDataSourceImpl
@@ -12,8 +10,8 @@ import com.example.okoablood.data.remote.FirebaseService
 import com.example.okoablood.data.repository.AppointmentDataSourceImpl
 import com.example.okoablood.data.repository.BloodDonationRepositoryImpl
 import com.example.okoablood.di.DependencyProvider
-import com.example.okoablood.navigation.MainNavGraph
-import com.example.okoablood.navigation.Routes
+import com.example.okoablood.navigation.MainNavGraph // <-- IMPORT ADDED
+import com.example.okoablood.navigation.Routes // <-- IMPORT ADDED
 import com.example.okoablood.ui.theme.OkoaBloodTheme
 import com.google.firebase.auth.FirebaseAuth
 

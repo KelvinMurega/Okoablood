@@ -10,6 +10,7 @@ data class Donor(
     val bloodGroup: String = "",
     val location: String = "",
     val profileImageUrl: String = "",
+    val isAvailable : Boolean = true,
     val availableForDonation: Boolean = true,
     val lastDonationDate: Long = 0
 
