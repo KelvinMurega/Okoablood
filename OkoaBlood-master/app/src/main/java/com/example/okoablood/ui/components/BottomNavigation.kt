@@ -13,7 +13,7 @@ sealed class BottomNavItem(
     val icon: ImageVector
 ) {
     object Home : BottomNavItem("home", "Home", Icons.Default.Home)
-    object Donors : BottomNavItem("all_donors", "Donors", Icons.Default.Group)
+    object Map : BottomNavItem("map", "Map", Icons.Default.Map)
     object Notifications : BottomNavItem("notifications", "Notifications", Icons.Default.Notifications)
     object Profile : BottomNavItem("profile", "Profile", Icons.Default.Person)
 }
@@ -26,7 +26,7 @@ fun OkoaBloodBottomNavigation(
 ) {
     val items = listOf(
         BottomNavItem.Home,
-        BottomNavItem.Donors,
+        BottomNavItem.Map,
         BottomNavItem.Notifications,
         BottomNavItem.Profile
     )

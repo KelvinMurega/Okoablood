@@ -45,6 +45,7 @@ object Routes {
     const val REGISTER = "register"
 
     const val HOME = "home"
+    const val MAP = "map"
     const val PROFILE = "profile"
     const val NOTIFICATIONS = "notifications"
 
@@ -154,6 +155,15 @@ fun MainNavGraph(
                 homeViewModel = homeViewModel,
                 currentRoute = Routes.PROFILE,
                 profileViewModel = profileViewModel
+            )
+        }
+
+        composable(Routes.MAP) {
+            MainScreenWithNavigation(
+                navController = navController,
+                homeViewModel = homeViewModel,
+                currentRoute = Routes.MAP,
+                profileViewModel = profileViewModel // Pass shared VM
             )
         }
 
@@ -303,7 +313,7 @@ fun MainScreenWithNavigation(
                 // Show bottom nav only on main screens
                 if (currentRoute in listOf(
                         Routes.HOME,
-                        Routes.ALL_DONORS,
+                        Routes.MAP,
                         Routes.NOTIFICATIONS,
                         Routes.PROFILE
                     )
@@ -357,6 +367,15 @@ fun MainScreenWithNavigation(
                 Routes.NOTIFICATIONS -> {
                     NotificationsScreen(
                         onBack = { navController.popBackStack() },
+                        onRequestClick = { requestId ->
+                            navController.navigateToRequestDetails(requestId)
+                        }
+                    )
+                }
+                Routes.MAP -> {
+                    val mapViewModel = remember { DependencyProvider.provideMapViewModel() }
+                    com.example.okoablood.ui.screens.map.MapScreen(
+                        viewModel = mapViewModel,
                         onRequestClick = { requestId ->
                             navController.navigateToRequestDetails(requestId)
                         }
