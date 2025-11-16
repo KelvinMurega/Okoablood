@@ -189,9 +189,4 @@ open suspend fun signUp(email: String, password: String): AuthUser? {
             .await()
             .toObjects(Appointment::class.java)
     }
-
-
-
 }
-
-
