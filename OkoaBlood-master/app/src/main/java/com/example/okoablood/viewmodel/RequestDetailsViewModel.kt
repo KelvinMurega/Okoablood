@@ -24,7 +24,7 @@ class RequestDetailsViewModel(
     internal fun loadRequest(id1: String) {
         viewModelScope.launch {
             try {
-                val result = repository.getRequestById(id)
+                val result = repository.getRequestById(id1)
                 _request.value = result
             } catch (e: Exception) {
                 e.printStackTrace()

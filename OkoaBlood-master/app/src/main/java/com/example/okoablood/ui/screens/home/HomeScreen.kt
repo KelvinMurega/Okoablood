@@ -32,6 +32,7 @@ fun HomeScreen(
     onNavigateToRequestDetails: (String) -> Unit,
     onNavigateToRequestBlood: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToMap: () -> Unit,
     onOpenDrawer: () -> Unit = {},
     bloodRequestViewModel: BloodRequestViewModel
 ) {
@@ -40,17 +41,16 @@ fun HomeScreen(
 
     // Filter state
     var selectedBloodGroup by remember { mutableStateOf<String?>(null) }
-    var showUrgentOnly by remember { mutableStateOf(false) }
     var bloodGroupExpanded by remember { mutableStateOf(false) }
+    var selectedTabIndex by remember { mutableStateOf(0) }
 
     val bloodGroups = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
 
-    // Apply filters to blood requests
-    val filteredRequests = remember(uiState.bloodRequests, selectedBloodGroup, showUrgentOnly) {
+    // Apply filters to blood requests (by blood group only; urgent/all handled by tabs)
+    val filteredRequests = remember(uiState.bloodRequests, selectedBloodGroup) {
         uiState.bloodRequests.filter { request ->
             val matchesBloodGroup = selectedBloodGroup == null || request.bloodGroup.equals(selectedBloodGroup, ignoreCase = true)
-            val matchesUrgency = !showUrgentOnly || request.urgent
-            matchesBloodGroup && matchesUrgency
+            matchesBloodGroup
         }
     }
 
@@ -112,11 +112,7 @@ fun HomeScreen(
                         item {
                             QuickActionButtons(
                                 onFindDonors = onNavigateToDonors,
-                                onHospitals = {
-                                    // TODO: Navigate to hospitals screen when implemented
-                                    Toast.makeText(context, "Hospitals feature coming soon!", Toast.LENGTH_SHORT).show()
-                                },
-                                onUrgentRequests = onNavigateToNotifications,
+                                onHospitals = onNavigateToMap,
                                 onRequestBlood = onNavigateToRequestBlood
                             )
                         }
@@ -131,8 +127,6 @@ fun HomeScreen(
                             BloodRequestFilters(
                                 selectedBloodGroup = selectedBloodGroup,
                                 onBloodGroupSelected = { selectedBloodGroup = it },
-                                showUrgentOnly = showUrgentOnly,
-                                onUrgentOnlyChanged = { showUrgentOnly = it },
                                 bloodGroupExpanded = bloodGroupExpanded,
                                 onBloodGroupExpandedChanged = { bloodGroupExpanded = it },
                                 bloodGroups = bloodGroups
@@ -144,73 +138,62 @@ fun HomeScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                         }
 
+                        item {
+                            TabRow(selectedTabIndex = selectedTabIndex) {
+                                Tab(
+                                    selected = selectedTabIndex == 0,
+                                    onClick = { selectedTabIndex = 0 },
+                                    text = { Text("Urgent") }
+                                )
+                                Tab(
+                                    selected = selectedTabIndex == 1,
+                                    onClick = { selectedTabIndex = 1 },
+                                    text = { Text("All") }
+                                )
+                            }
+                        }
 
                         item {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = if (showUrgentOnly) "Urgent Requests" else "Urgent Requests",
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                if (selectedBloodGroup != null || showUrgentOnly) {
-                                    TextButton(onClick = {
-                                        selectedBloodGroup = null
-                                        showUrgentOnly = false
-                                    }) {
-                                        Text("Clear Filters")
-                                    }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+
+                        if (selectedTabIndex == 0) {
+                            if (urgentRequests.isEmpty()) {
+                                item {
+                                    Text(
+                                        text = "No urgent requests at the moment",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
                                 }
-                            }
-                        }
-
-
-                        if (urgentRequests.isEmpty()) {
-                            item {
-                                Text(
-                                    text = "No urgent requests at the moment",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                            }
-                        } else {
-                            items(urgentRequests) { request ->
-                                BloodRequestCard(
-                                    bloodRequest = request,
-                                    onClick = { onNavigateToRequestDetails(request.id) }
-                                )
-                            }
-                        }
-
-
-                        item {
-                            SectionHeader(title = "All Blood Requests")
-                        }
-
-
-                        if (nonUrgentRequests.isEmpty() && urgentRequests.isEmpty()) {
-                            item {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    EmptyStateMessage(
-                                        message = "No blood requests found.\nCreate a new request by tapping the + button."
+                            } else {
+                                items(urgentRequests) { request ->
+                                    BloodRequestCard(
+                                        bloodRequest = request,
+                                        onClick = { onNavigateToRequestDetails(request.id) }
                                     )
                                 }
                             }
                         } else {
-                            items(nonUrgentRequests) { request ->
-                                BloodRequestCard(
-                                    bloodRequest = request,
-                                    onClick = { onNavigateToRequestDetails(request.id) }
-                                )
+                            if (filteredRequests.isEmpty()) {
+                                item {
+                                    Box(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        EmptyStateMessage(
+                                            message = "No blood requests found.\nCreate a new request by tapping the + button."
+                                        )
+                                    }
+                                }
+                            } else {
+                                items(filteredRequests) { request ->
+                                    BloodRequestCard(
+                                        bloodRequest = request,
+                                        onClick = { onNavigateToRequestDetails(request.id) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -225,7 +208,6 @@ fun HomeScreen(
 fun QuickActionButtons(
     onFindDonors: () -> Unit,
     onHospitals: () -> Unit,
-    onUrgentRequests: () -> Unit,
     onRequestBlood: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -271,12 +253,6 @@ fun QuickActionButtons(
                 title = "Hospitals",
                 icon = Icons.Default.LocalHospital,
                 onClick = onHospitals,
-                modifier = Modifier.weight(1f)
-            )
-            QuickActionButton(
-                title = "Urgent",
-                icon = Icons.Default.Warning,
-                onClick = onUrgentRequests,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -328,8 +304,6 @@ fun QuickActionButton(
 fun BloodRequestFilters(
     selectedBloodGroup: String?,
     onBloodGroupSelected: (String?) -> Unit,
-    showUrgentOnly: Boolean,
-    onUrgentOnlyChanged: (Boolean) -> Unit,
     bloodGroupExpanded: Boolean,
     onBloodGroupExpandedChanged: (Boolean) -> Unit,
     bloodGroups: List<String>
@@ -422,32 +396,6 @@ fun BloodRequestFilters(
                         }
                     )
                 }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Urgency Filter
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "Show Urgent Only",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Text(
-                        text = "Filter to show only urgent requests",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-                Switch(
-                    checked = showUrgentOnly,
-                    onCheckedChange = onUrgentOnlyChanged
-                )
             }
         }
     }

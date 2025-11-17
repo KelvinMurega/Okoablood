@@ -1,5 +1,8 @@
 package com.example.okoablood.ui.screens.requests
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -7,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.okoablood.ui.viewmodels.RequestDetailsViewModel
 
@@ -18,10 +22,10 @@ fun RequestDetailsScreen(
     viewModel: RequestDetailsViewModel
 ) {
     val request by viewModel.request.collectAsState()
+    val context = LocalContext.current
     LaunchedEffect(id) {
         viewModel.loadRequest(id)
     }
-
 
     Scaffold(
         topBar = {
@@ -42,10 +46,22 @@ fun RequestDetailsScreen(
                     .padding(16.dp)
             ) {
                 Text("Patient Name: ${it.patientName}", style = MaterialTheme.typography.titleMedium)
+                Text("Requester: ${it.requesterName ?: "Unknown"}", style = MaterialTheme.typography.bodyMedium)
                 Text("Blood Group: ${it.bloodGroup}", style = MaterialTheme.typography.bodyMedium)
                 Text("Location: ${it.location}", style = MaterialTheme.typography.bodyMedium)
                 Text("Hospital: ${it.hospital}", style = MaterialTheme.typography.bodyMedium)
-                Text("Contact: ${it.requesterPhoneNumber}", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = "Contact: ${it.requesterPhoneNumber}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        val phone = it.requesterPhoneNumber
+                        if (phone.isNotBlank()) {
+                            val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:$phone"))
+                            context.startActivity(intent)
+                        }
+                    }
+                )
                 Text("Urgent: ${if (it.urgent) "Yes" else "No"}", style = MaterialTheme.typography.bodyMedium)
                 Text("Date: ${it.requestDate}", style = MaterialTheme.typography.bodySmall)
             }

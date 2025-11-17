@@ -173,9 +173,8 @@ fun MainNavGraph(
             val donorViewModel = DependencyProvider.provideDonorViewModel()
             DonorDetailsScreen(
                 donorId = donorId,
-                viewModel = donorViewModel,
                 onBack = { navController.popBackStack() },
-                donor = Donor()
+                viewModel = donorViewModel
             )
         }
 
@@ -279,22 +278,6 @@ fun MainScreenWithNavigation(
                 }
                 context.startActivity(Intent.createChooser(intent, "Share via"))
             }
-        ),
-        DrawerItem(
-            title = "About Us",
-            icon = Icons.Default.Info,
-            onClick = {
-                // TODO: Navigate to About Us screen when implemented
-                Toast.makeText(context, "About Us coming soon!", Toast.LENGTH_SHORT).show()
-            }
-        ),
-        DrawerItem(
-            title = "Partners",
-            icon = Icons.Default.Business,
-            onClick = {
-                // TODO: Navigate to Partners screen when implemented
-                Toast.makeText(context, "Partners coming soon!", Toast.LENGTH_SHORT).show()
-            }
         )
     )
 
@@ -351,6 +334,7 @@ fun MainScreenWithNavigation(
                         },
                         onNavigateToRequestBlood = { navController.navigate(Routes.NEW_REQUESTS) },
                         onNavigateToNotifications = { navController.navigate(Routes.NOTIFICATIONS) },
+                        onNavigateToMap = { navController.navigate(Routes.MAP) },
                         onOpenDrawer = { scope.launch { drawerState.open() } },
                         bloodRequestViewModel = bloodRequestViewModel
                     )

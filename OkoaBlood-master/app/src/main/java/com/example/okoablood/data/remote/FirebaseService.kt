@@ -91,11 +91,39 @@ open suspend fun signUp(email: String, password: String): AuthUser? {
 
     // Blood Request operations
     suspend fun getRequestById(id: String): BloodRequest? {
-        return firestore.collection("bloodRequests")
+        val snap = firestore.collection("bloodRequests")
             .document(id)
             .get()
             .await()
-            .toObject(BloodRequest::class.java)
+        if (!snap.exists()) return null
+        val data = snap.data ?: return null
+
+        val requestDateAny = data["requestDate"]
+        val requestDateMillis = when (requestDateAny) {
+            is Long -> requestDateAny
+            is com.google.firebase.Timestamp -> requestDateAny.toDate().time
+            is java.util.Date -> requestDateAny.time
+            is Number -> requestDateAny.toLong()
+            else -> System.currentTimeMillis()
+        }
+
+        return BloodRequest(
+            id = (data["id"] as? String)?.ifBlank { snap.id } ?: snap.id,
+            requesterId = data["requesterId"] as? String,
+            requesterName = data["requesterName"] as? String,
+            requesterPhoneNumber = data["requesterPhoneNumber"] as? String ?: "",
+            patientName = data["patientName"] as? String ?: "",
+            bloodGroup = data["bloodGroup"] as? String ?: "",
+            units = (data["units"] as? Number)?.toInt(),
+            hospital = data["hospital"] as? String ?: "",
+            location = data["location"] as? String ?: "",
+            constituency = data["constituency"] as? String,
+            urgent = data["urgent"] as? Boolean ?: false,
+            urgencyLevel = data["urgencyLevel"] as? String,
+            additionalInfo = data["additionalInfo"] as? String,
+            status = data["status"] as? String ?: "Active",
+            requestDate = requestDateMillis
+        )
     }
 
     open suspend fun createBloodRequest(request: BloodRequest): String {
@@ -106,12 +134,43 @@ open suspend fun signUp(email: String, password: String): AuthUser? {
     }
 
     open suspend fun getAllBloodRequests(): List<BloodRequest> {
+        // Single-field filter to avoid composite index; normalize requestDate and sort in memory
         val snapshot = requestsCollection
             .whereEqualTo("status", "Active")
-            .orderBy("requestDate")
             .get()
             .await()
-        return snapshot.documents.mapNotNull { it.toObject(BloodRequest::class.java) }
+
+        val requests = snapshot.documents.map { doc ->
+            val data = doc.data ?: emptyMap<String, Any?>()
+            val requestDateAny = data["requestDate"]
+            val requestDateMillis = when (requestDateAny) {
+                is Long -> requestDateAny
+                is com.google.firebase.Timestamp -> requestDateAny.toDate().time
+                is java.util.Date -> requestDateAny.time
+                is Number -> requestDateAny.toLong()
+                else -> 0L
+            }
+
+            BloodRequest(
+                id = (data["id"] as? String)?.ifBlank { doc.id } ?: doc.id,
+                requesterId = data["requesterId"] as? String,
+                requesterName = data["requesterName"] as? String,
+                requesterPhoneNumber = data["requesterPhoneNumber"] as? String ?: "",
+                patientName = data["patientName"] as? String ?: "",
+                bloodGroup = data["bloodGroup"] as? String ?: "",
+                units = (data["units"] as? Number)?.toInt(),
+                hospital = data["hospital"] as? String ?: "",
+                location = data["location"] as? String ?: "",
+                constituency = data["constituency"] as? String,
+                urgent = data["urgent"] as? Boolean ?: false,
+                urgencyLevel = data["urgencyLevel"] as? String,
+                additionalInfo = data["additionalInfo"] as? String,
+                status = data["status"] as? String ?: "Active",
+                requestDate = requestDateMillis
+            )
+        }
+
+        return requests.sortedByDescending { it.requestDate }
     }
 
     open suspend fun getBloodRequestsByUser(userId: String): List<BloodRequest> {

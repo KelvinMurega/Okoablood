@@ -35,6 +35,7 @@ fun NewBloodRequestScreen(
     onBack: () -> Unit
 ) {
     // Form state
+    var fullName by remember { mutableStateOf("") }
     var bloodGroup by remember { mutableStateOf<String?>(null) }
     var units by remember { mutableStateOf("1") }
     var urgencyLevel by remember { mutableStateOf<String?>(null) }
@@ -125,6 +126,23 @@ fun NewBloodRequestScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
+
+                // Full Name
+                Text(
+                    text = "Enter Full Name*",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                OutlinedTextField(
+                    value = fullName,
+                    onValueChange = { fullName = it },
+                    label = { Text("Enter Full Name") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Blood Group Dropdown
                 Text(
@@ -327,13 +345,14 @@ fun NewBloodRequestScreen(
                     val urgent = urgencyLevel == "High" || urgencyLevel == "Critical"
                     val request = BloodRequest(
                         id = "",
-                        patientName = "", // Can be added later if needed
+                        patientName = "", // Optional: capture separately if needed
+                        requesterName = fullName,
                         bloodGroup = bloodGroup ?: "",
                         units = units.toIntOrNull(),
                         hospital = hospitalLocation,
                         location = hospitalLocation, // Using hospital as location for now
                         constituency = constituency,
-                        requesterPhoneNumber = "", // Can be added later if needed
+                        requesterPhoneNumber = "", // Optional: add a phone field later
                         urgent = urgent,
                         urgencyLevel = urgencyLevel,
                         additionalInfo = additionalNotes.ifBlank { null },
@@ -342,6 +361,7 @@ fun NewBloodRequestScreen(
                     viewModel.createBloodRequest(request)
                 },
                 enabled = submitResult == null &&
+                        fullName.isNotBlank() &&
                         bloodGroup != null &&
                         units.isNotBlank() &&
                         urgencyLevel != null &&
