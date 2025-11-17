@@ -1,5 +1,6 @@
 package com.example.okoablood.viewmodel
 
+
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,15 +15,20 @@ import androidx.compose.runtime.State
 
 
 
+
+
+
 class BloodRequestViewModel(
     private val firebaseService: FirebaseService,
     private val repository: BloodDonationRepository
 ) : ViewModel() {
 
+
     private val _bloodRequestsState = MutableStateFlow<BloodRequestsState>(BloodRequestsState.Loading)
     val bloodRequestsState: StateFlow<BloodRequestsState> = _bloodRequestsState
     private val _submitRequestState = mutableStateOf<Result<String>?>(null)
     val submitRequestState: State<Result<String>?> = _submitRequestState
+
 
     fun createBloodRequest(request: BloodRequest) {
         viewModelScope.launch {
@@ -38,12 +44,17 @@ class BloodRequestViewModel(
 
 
 
+
+
+
     fun clearSubmitRequestState() {
         _submitRequestState.value = null
     }
 
+
     private val _filteredBloodRequestsState = MutableStateFlow<BloodRequestsState>(BloodRequestsState.Loading)
     val filteredBloodRequestsState: StateFlow<BloodRequestsState> = _filteredBloodRequestsState
+
 
     fun loadAllBloodRequests() {
         viewModelScope.launch {
@@ -56,6 +67,8 @@ class BloodRequestViewModel(
             }
         }
     }
+
+
 
 
     fun filterBloodRequests(query: String) {
@@ -72,9 +85,11 @@ class BloodRequestViewModel(
         }
     }
 
+
     sealed class BloodRequestsState {
         object Loading : BloodRequestsState()
         data class Success(val requests: List<BloodRequest>) : BloodRequestsState()
         data class Error(val message: String) : BloodRequestsState()
     }
 }
+

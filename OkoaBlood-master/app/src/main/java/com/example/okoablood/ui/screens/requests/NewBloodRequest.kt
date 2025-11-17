@@ -1,5 +1,6 @@
 package com.example.okoablood.ui.screens.requests
 
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -25,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.example.okoablood.data.model.BloodRequest
 import com.example.okoablood.viewmodel.BloodRequestViewModel
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewBloodRequestScreen(
@@ -39,9 +41,9 @@ fun NewBloodRequestScreen(
     var hospitalLocation by remember { mutableStateOf("") }
     var constituency by remember { mutableStateOf("") }
     var additionalNotes by remember { mutableStateOf("") }
-    
+
     var bloodGroupExpanded by remember { mutableStateOf(false) }
-    
+
     val bloodGroups = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
     val urgencyLevels = listOf(
         "Low" to "Can wait a few days.",
@@ -50,7 +52,9 @@ fun NewBloodRequestScreen(
         "Critical" to "Needed immediately."
     )
 
+
     val submitResult by viewModel.submitRequestState
+
 
     LaunchedEffect(submitResult) {
         if (submitResult?.isSuccess == true) {
@@ -58,6 +62,7 @@ fun NewBloodRequestScreen(
             onRequestSubmitted()
         }
     }
+
 
     Scaffold(
         topBar = {
@@ -93,7 +98,7 @@ fun NewBloodRequestScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
-                
+
                 // Request Details Section
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -113,14 +118,14 @@ fun NewBloodRequestScreen(
                         fontWeight = FontWeight.Bold
                     )
                 }
-                
+
                 Text(
                     text = "Fill in the details of your blood request",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     modifier = Modifier.padding(bottom = 16.dp)
                 )
-                
+
                 // Blood Group Dropdown
                 Text(
                     text = "Blood Group Needed*",
@@ -175,9 +180,9 @@ fun NewBloodRequestScreen(
                         )
                     }
                 }
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Units Needed
                 Text(
                     text = "Units Needed*",
@@ -193,9 +198,9 @@ fun NewBloodRequestScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Urgency Level
                 Text(
                     text = "Urgency Level*",
@@ -253,9 +258,9 @@ fun NewBloodRequestScreen(
                     }
                 }
             }
-            
+
             Divider(modifier = Modifier.padding(vertical = 16.dp))
-            
+
             // Location Details Section
             Column(
                 modifier = Modifier
@@ -276,9 +281,9 @@ fun NewBloodRequestScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Constituency
                 Text(
                     text = "Constituency*",
@@ -293,9 +298,9 @@ fun NewBloodRequestScreen(
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true
                 )
-                
+
                 Spacer(modifier = Modifier.height(16.dp))
-                
+
                 // Additional Notes
                 Text(
                     text = "Additional Notes",
@@ -313,9 +318,9 @@ fun NewBloodRequestScreen(
                     maxLines = 5
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Submit Button
             Button(
                 onClick = {
@@ -336,12 +341,12 @@ fun NewBloodRequestScreen(
                     )
                     viewModel.createBloodRequest(request)
                 },
-                enabled = submitResult == null && 
-                         bloodGroup != null && 
-                         units.isNotBlank() && 
-                         urgencyLevel != null &&
-                         hospitalLocation.isNotBlank() &&
-                         constituency.isNotBlank(),
+                enabled = submitResult == null &&
+                        bloodGroup != null &&
+                        units.isNotBlank() &&
+                        urgencyLevel != null &&
+                        hospitalLocation.isNotBlank() &&
+                        constituency.isNotBlank(),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -356,7 +361,7 @@ fun NewBloodRequestScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            
+
             // Error Message
             submitResult?.exceptionOrNull()?.let {
                 Text(
@@ -365,8 +370,9 @@ fun NewBloodRequestScreen(
                     modifier = Modifier.padding(16.dp)
                 )
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
+

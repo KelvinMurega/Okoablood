@@ -1,6 +1,8 @@
 package com.example.okoablood.data.model
 
+
 import java.util.Date
+
 
 data class BloodRequest(
     val id: String = "",
@@ -19,3 +21,4 @@ data class BloodRequest(
     val status: String = "Active",
     val requestDate: Long = System.currentTimeMillis()
 )
+
